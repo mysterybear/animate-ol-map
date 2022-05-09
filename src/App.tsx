@@ -1,42 +1,43 @@
 import { Map, View } from "ol"
 import TileLayer from "ol/layer/Tile"
-import React, { Fragment, useEffect, useRef, useState } from "react"
-import OSM from "ol/source/OSM"
-import "./App.css"
 import { fromLonLat } from "ol/proj"
+import OSM from "ol/source/OSM"
+import React, { Fragment, useEffect, useRef, useState } from "react"
+import "./App.css"
 
 const istanbul = fromLonLat([28.9744, 41.0128])
 const london = fromLonLat([-0.12755, 51.507222])
 
 function App() {
   const mapElementRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<Map>(null!)
 
   const [isIstanbul, setIsIstanbul] = useState(true)
 
-  useEffect(() => {
-    if (!mapElementRef.current) return
-    const view = new View({
-      center: istanbul,
-      zoom: 6,
-    })
-
-    mapRef.current = new Map({
-      target: mapElementRef.current,
+  const [map] = useState(
+    new Map({
       layers: [
         new TileLayer({
           preload: 4,
           source: new OSM(),
         }),
       ],
-      view: view,
+      view: new View({
+        center: istanbul,
+        zoom: 6,
+      }),
     })
-  }, [])
+  )
+
+  useEffect(() => {
+    if (!mapElementRef.current) return
+    map.setTarget(mapElementRef.current)
+    return () => {
+      map.setTarget(undefined)
+    }
+  }, [map])
 
   const action = () => {
-    if (!mapRef.current) return
-
-    mapRef.current.getView().animate({
+    map.getView().animate({
       center: isIstanbul ? london : istanbul,
     })
 
@@ -44,16 +45,14 @@ function App() {
   }
 
   const rotateLeft = () => {
-    if (!mapRef.current) return
-    const view = mapRef.current.getView()
+    const view = map.getView()
     view.animate({
       rotation: view.getRotation() + Math.PI / 2,
     })
   }
 
   const rotateRight = () => {
-    if (!mapRef.current) return
-    const view = mapRef.current.getView()
+    const view = map.getView()
     view.animate({
       rotation: view.getRotation() - Math.PI / 2,
     })
